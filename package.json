@@ -1,0 +1,25 @@
+{
+  "name": "node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SabineWanka/node.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SabineWanka/node/issues"
+  },
+  "homepage": "https://github.com/SabineWanka/node#readme",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "html-pdf": "^2.2.0",
+    "inquirer": "^7.0.0"
+  }
+}
