@@ -2,7 +2,7 @@ const inquirer = require('inquirer');
 const html = require("./generateHTML.js");
 const axios = require('axios');
 const fs = require('fs');
-const pdf = require('html-pdf');
+const pdf = require('pdf-puppeteer');
 const util = require("util");
 
 var options = { format: 'Letter' };
@@ -231,7 +231,7 @@ function promptUser() {
           console.log(err);
         });
 
-      pdf.create(html, options).toFile('./09-NodeJS-homework-demo.pdf', function (err, res) {
+      pdf.create(html, options).toFile('_', function (err, res) {
         if (err) return console.log(err);
-        console.log(res); // { filename: '/app/09-NodeJS-homework-demo.pdf' }
+        console.log(res);
       });
