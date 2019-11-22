@@ -2,23 +2,10 @@ const inquirer = require('inquirer');
 const html = require("./generateHTML.js");
 const axios = require('axios');
 const fs = require('fs');
-const pdf = require('pdf-puppeteer');
 const util = require("util");
-
-var options = { format: 'Letter' };
-
+const convertHTMLToPDF = require("pdf-puppeteer");
 
 const writeFileAsync = util.promisify(fs.writeFile);
-
-
-const questions = [
-
-];
-
-function writeToFile(fileName, data) {
-
-}
-
 
 
 function promptUser() {
@@ -34,26 +21,20 @@ function promptUser() {
       name: "color",
       message: "Whats your favourite color?",
       choices: ["red", "blue", "pink", "green"]
-    }
+    },
   ])
-    .then(answers => {
-      var username = answers.github_username;
-      axios.get('username')
-        .then(function (response) {
-          // handle success
-          console.log(response);
-        })
-        .catch(function (error) {
-          // handle error
-          console.log(error);
-        })
-        .finally(function () {
-          // always executed
-        });
+}
+async function getUser() {
+  try {
+    const response = await axios.get("username");
+    console.log(response);
+  } catch (error) {
+    console.error(error);
+  }
+}
 
-
-      function generateHTML(answers) {
-        return `
+function generateHTML(answers) {
+  return `
   <!DOCTYPE html>
   <html lang="en">
   <head>
@@ -216,22 +197,28 @@ function promptUser() {
   </div>
 </body>
 </html>`;
-      }
+}
 
-      promptUser()
-        .then(function (answers) {
-          const html = generateHTML(answers);
+async function init() {
+  console.log("hi")
+  try {
+    const answers = await promptUser();
 
-          return writeFileAsync("index.html", html);
-        })
-        .then(function () {
-          console.log("Successfully wrote to index.html");
-        })
-        .catch(function (err) {
-          console.log(err);
-        });
+    const html = generateHTML(answers);
 
-      pdf.create(html, options).toFile('_', function (err, res) {
-        if (err) return console.log(err);
-        console.log(res);
-      });
+    await writeFileAsync("index.html", html);
+
+    console.log("Successfully wrote to index.html");
+  } catch (err) {
+    console.log(err);
+  }
+
+  var callback = function (pdf) {
+    // do something with the PDF like send it as the response
+    res.setHeader("html", "application/pdf");
+    res.send(pdf);
+  }
+  convertHTMLToPDF(html, callback, options);
+}
+init();
+
