@@ -3,9 +3,41 @@ const html = require("./generateHTML.js");
 const axios = require('axios');
 const fs = require('fs');
 const util = require("util");
-const convertHTMLToPDF = require("pdf-puppeteer");
+
+const path = require("path");
+
+
+const puppeteer = require("puppeteer")
+
 
 const writeFileAsync = util.promisify(fs.writeFile);
+
+const colors = {
+  green: {
+    wrapperBackground: "#E6E1C3",
+    headerBackground: "#C1C72C",
+    headerColor: "black",
+    photoBorderColor: "black"
+  },
+  blue: {
+    wrapperBackground: "#5F64D3",
+    headerBackground: "#26175A",
+    headerColor: "white",
+    photoBorderColor: "#73448C"
+  },
+  pink: {
+    wrapperBackground: "#879CDF",
+    headerBackground: "#FF8374",
+    headerColor: "white",
+    photoBorderColor: "#FEE24C"
+  },
+  red: {
+    wrapperBackground: "#DE9967",
+    headerBackground: "#870603",
+    headerColor: "white",
+    photoBorderColor: "white"
+  }
+};
 
 
 function promptUser() {
@@ -24,16 +56,16 @@ function promptUser() {
     },
   ])
 }
-async function getUser() {
+async function getUser(username) {
   try {
-    const response = await axios.get("username");
-    console.log(response);
+    const response = await axios.get(`https://api.github.com/users/${username}`);
+    return response.data
   } catch (error) {
     console.error(error);
   }
 }
 
-function generateHTML(answers) {
+function generateHTML(data) {
   return `
   <!DOCTYPE html>
   <html lang="en">
@@ -186,10 +218,10 @@ function generateHTML(answers) {
     <main id="app" class="container">
     <div class="card">
       <div class="photo-header">
-        <img width="240" height="240" src="${data.user.avatar_url}" />
+        <img width="240" height="240" src="${data.avatar_url}" />
         </div>
         <div class="row">
-          <h1>${data.user.name}</h1>
+          <h1>${data.name}</h1>
           <code>${JSON.stringify(data.user)}</code>
         </div>
       </div>
@@ -199,26 +231,48 @@ function generateHTML(answers) {
 </html>`;
 }
 
+
+async function printPDF(html) {
+  try {
+    const browser = await puppeteer.launch({
+      // these arguments allow puppeteer to work on WSL 2 without going through quite a bit of work to set up a viable sandbox
+      // see https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox for more info
+      // since we trust the HTML (we create it ourselves!) this should be fine
+      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
+    await page.pdf({ path: path.join(__dirname, "profile.pdf"), format: "A4" });
+    await browser.close();
+    console.log("PDF generated!");
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+const callback = async function (pdf) {
+
+  // do something with the PDF like send it as the response   
+  await writeFileAsync("index.pdf", pdf);
+}
+
 async function init() {
   console.log("hi")
   try {
-    const answers = await promptUser();
+    const answers = await promptUser()
+    const data = await getUser(answers.username)
 
-    const html = generateHTML(answers);
+    console.log(data)
 
-    await writeFileAsync("index.html", html);
+    const html = generateHTML({ color: answers.color, ...data });
+    printPDF(html);
 
-    console.log("Successfully wrote to index.html");
   } catch (err) {
     console.log(err);
   }
 
-  var callback = function (pdf) {
-    // do something with the PDF like send it as the response
-    res.setHeader("html", "application/pdf");
-    res.send(pdf);
-  }
-  convertHTMLToPDF(html, callback, options);
+
 }
+
 init();
 

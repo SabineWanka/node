@@ -22,5 +22,5 @@
     "pdf-puppeteer": "^1.1.9"
   },
   "devDependencies": {},
-  "description": ""
+  "description": "node index.js"
 }
